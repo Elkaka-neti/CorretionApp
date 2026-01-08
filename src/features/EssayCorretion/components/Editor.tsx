@@ -1,51 +1,54 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import debounce from 'lodash.debounce';
-import { useAnalyseEssay } from '../hooks/analyseEssay'
+import React, { useEffect, forwardRef, useImperativeHandle } from 'react';
 
 
 interface EditorProps {
     text: string;
-    onTextChange: (text: string) => void;
+    onTextChange: (text: string, cursor: number) => void;
+    onScroll: (e: React.UIEvent<HTMLTextAreaElement>) => void;
 }
 
 
-const Editor: React.FC<EditorProps> = ({ text, onTextChange }) => {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [content, setContent] = useState<string>('');
-    const { handleAnalyseEssay } = useAnalyseEssay();
+const Editor = forwardRef<HTMLTextAreaElement, EditorProps>(({ text, onTextChange, onScroll  }, ref) => {
+    
 
     useEffect(() => {
         
-        if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto'; 
-            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        if (ref && 'current' in ref && ref.current) {
+/*O react demora atribuir, isso trata o erro temporariamente*/ 
+
+            ref.current.style.height = 'auto'; 
+            ref.current.style.height = `${ref.current.scrollHeight}px`;
         }
-    }, [text]);
+    }, [text, ref]);
 
-
+    /*
     const sendDebounceData = useCallback(
         debounce((nextContent: string) => handleAnalyseEssay(nextContent), 1500),
     []);
-
+    */
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
        const value = e.target.value;
-        onTextChange(value);
-        setContent(value);
-        sendDebounceData(value);
+       const cursorPosition = e.target.selectionStart;
+
+        onTextChange(value, cursorPosition);
+        //sendDebounceData(value);
     };
+    
 	
     return (
-        <div className="bg-white p-6 rounded-lg shadow-lg border border-slate-200">
             <textarea
-                ref={textareaRef}
-                value={content}
+                ref={ref}
+                value={text}
                 onChange={handleTextChange}
-                className="w-full bg-white font-serif text-lg resize-none focus:outline-none leading-relaxed"
+                onScroll={onScroll}
+                className="w-full bg-transparent text-transparent font-serif text-lg resize-none focus:outline-none leading-relaxed p-6 relative z-10 caret-black shadow-none border-none outline-none overflow-hidden"
                 placeholder="Comece sua redação aqui..."
                 rows={25} 
+                spellCheck={false}
             />
-        </div>
     );
-};
+});
+
+Editor.displayName = 'Editor';
 
 export default Editor;

@@ -9,7 +9,10 @@ export interface Correction {
 
 export interface MessageEntrada {
     type: 'CHECK_TEXT' | 'OUTHERS..',
-    payload: string
+    payload: {
+        sentences: Sentence[];
+        offset: number;
+    }
 }
 
 export type MessageSaida = MessageSucesso | MessageError
@@ -22,13 +25,36 @@ export interface IaStatus {
     
 }
 
+export interface AnalyseUnit {
+    sentenceId: string;
+    corrections: Correction[];
+}
 
 interface MessageSucesso {
-    readonly status: 'SUCESSO',
-    result: Correction[]
-}
+    readonly status: 'SUCESSO';
+    readonly paragraphId: number;
+    result: AnalyseUnit[];
+ }
 
 interface MessageError {
     readonly status: 'ERRO',
     message: string
+}
+
+
+export interface ParagraphContext {
+    text: string;
+    offset: number;
+    length: number;
+    relativeCursor: number;
+}
+
+
+export interface Sentence {
+    readonly id: string;
+    text: string;
+    range: { indexStart: number;
+    indexEnd: number;
+    };
+    modified?: boolean
 }

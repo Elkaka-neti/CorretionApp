@@ -1,14 +1,14 @@
 
-import type { MessageEntrada, MessageSaida } from "../types";
-type Listener = (data: MessageSaida) => void;
-
+import type { MessageEntrada, AnalyseUnit, MessageSaida, ParagraphContext, Sentence, Correction } from "../types";
+//type Listener = (data: MessageSaida) => void;
+import { TextProcessor } from "./TextProcessor";
 
 class AiOrchestrator {
 
     private static instance: AiOrchestrator | null = null;
     private worker: Worker | null = null;
-
-    private listeners: Listener[] = [];
+    private cache = new Map<string, Correction[]>();
+    //private listeners: Listener[] = [];
 
     
     private constructor () {
@@ -44,7 +44,7 @@ class AiOrchestrator {
         }
     }
 
-    public check(text: string) {
+    public check(text: string, indice: number) {
 
        if(!this.worker) {
         try {
@@ -55,32 +55,88 @@ class AiOrchestrator {
         }
        }
 
-       const message: MessageEntrada = {
+       const paragraph = TextProcessor.textExtraction(text, indice);
+       const textTokens = TextProcessor.tokenization(paragraph);
+
+       let toProcess: Sentence[] = [];
+       let resultsInCache: AnalyseUnit[] = [];
+
+       textTokens.forEach((token) => {
+        const cached = this.cache.get(token.id);
+
+       if(cached) {
+          resultsInCache.push({
+            sentenceId: token.id,
+            corrections: cached
+          });
+
+       } else toProcess.push(token);
+       })
+
+
+       if(toProcess.length === 0) {
+
+        this.notifySubscribers({status: 'SUCESSO', paragraphId: paragraph.offset, result: resultsInCache});
+        return;
+
+       }else{
+
+        const message: MessageEntrada = {
         type: 'CHECK_TEXT',
-        payload: text
+        payload: {
+            sentences: toProcess,
+            offset: paragraph.offset
+        }
+
        };
 
        this.worker?.postMessage(message);
 
+       }
+       
     }
 
     private onMessage(event: MessageEvent<MessageSaida>) {
        
-        const result = event.data;
+        const data = event.data as MessageSaida;
+        
+        if(data.status === "SUCESSO") {
+          
+          data.result.forEach((item: AnalyseUnit) => {
 
-        this.listeners.forEach(listener => {
-         listener(result)
-       })
+          this.cache.set(item.sentenceId, item.corrections)
+
+          })
+
+
+          this.notifySubscribers(data);
+
+        }else if(data.status === "ERRO") {
+          
+          console.error("[WORKER] Falha ao processar o pedido", data.message)
+        }
+        //this.listeners.forEach(listener => {
+        // listener(result)
+       
        
     }
 
-    public subscribe(fun: Listener) {
-       this.listeners.push(fun)
-    }
 
-    public unsubscribe(fun: Listener) {
-        this.listeners.filter(listener => listener !== fun);
-    }
+
+    public subscribe(callback: (data: MessageSaida) => void) {
+  this.subscribers.push(callback);
+}
+
+    public unsubscribe(callback: (data: MessageSaida) => void) {
+  this.subscribers = this.subscribers.filter(sub => sub !== callback);
+}
+
+    private notifySubscribers(data: MessageSaida) {
+  this.subscribers.forEach(callback => callback(data));
+}
+
+
+    private subscribers: ((data: MessageSaida) => void)[] = [];
 
 }
 
