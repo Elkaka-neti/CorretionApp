@@ -15,7 +15,7 @@ const TopicInput: React.FC<any> = () => {
         e.preventDefault();
         setTopic(topic);
         passNorthTexts(topic);
-        navigate("/referencias");
+        navigate("/nova-redacao");
 
     };
 

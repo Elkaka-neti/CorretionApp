@@ -17,3 +17,9 @@ export interface EssayContextProps {
     essayAnalysisData: any;
     setEssayAnalysisData: React.Dispatch<React.SetStateAction<any>>;
 }
+
+export interface EditorMethods {
+    selectRange: (start: number, end: number) => void;
+    focus: () => void;
+    getScrollValues: () => {top: number, left: number}
+}

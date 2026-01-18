@@ -34,12 +34,13 @@ interface MessageSucesso {
     readonly status: 'SUCESSO';
     readonly paragraphId: number;
     result: AnalyseUnit[];
- }
+}
 
 interface MessageError {
     readonly status: 'ERRO',
     message: string
 }
+
 
 
 export interface ParagraphContext {
@@ -57,4 +58,9 @@ export interface Sentence {
     indexEnd: number;
     };
     modified?: boolean
+}
+
+export interface EnhancedCorrection extends Correction {
+    globalStartIndex: number;
+    globalEndIndex: number;
 }

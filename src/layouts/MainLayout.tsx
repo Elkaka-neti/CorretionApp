@@ -17,7 +17,8 @@ export function MainLayout() {
         <Outlet />
       </main>
       <footer className='fixed bottom-0 left-0 w-full items-center justify-center flex '>
-       <button className="w-[90%] p-5 bg-black rounded-3xl mb-3 flex items-center justify-center text-center text-white font-bold"> Teste </button>
+      {/* <button className="w-[90%] p-5 bg-black rounded-3xl mb-3 flex items-center justify-center text-center text-white font-bold"> Teste </button>*/}
+     
       </footer>
     </div>
   );
