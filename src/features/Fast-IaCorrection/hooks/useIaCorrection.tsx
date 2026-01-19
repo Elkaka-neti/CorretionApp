@@ -2,13 +2,11 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Correction, MessageSaida } from '../types';
 import AiOrchestrator from '../services/AiOrchestrator';
 import { debounce } from 'lodash';
+import type { EnhancedCorrection } from '../types';
 
 const aiGrammar = AiOrchestrator.getInstance();
 
-export interface EnhancedCorrection extends Correction {
-    globalStartIndex: number;
-    globalEndIndex: number;
-}
+
     
 export const useIaCorrection = () => {
 
@@ -36,7 +34,7 @@ export const useIaCorrection = () => {
             const paragraphOffset = data.paragraphId;
 
             const fullTextsErrors = data.result.flatMap(unit => {
-                return unit.corrections.map(correction => ({
+                 return unit.corrections.map(correction => ({
                     ...correction,
                     globalStartIndex: (paragraphOffset + correction.position.indexStart),
                     globalEndIndex: (paragraphOffset + correction.position.indexEnd)
@@ -44,7 +42,20 @@ export const useIaCorrection = () => {
                 }));
             });
 
-            setCorrections(fullTextsErrors);
+            const lastUnit = data.result[data.result.length - 1];
+            const endLimit = paragraphOffset + lastUnit.corrections[0].original.length;
+
+
+
+
+            setCorrections(prev => {
+
+                const filtrado = prev.filter(c => {
+                    c.globalStartIndex < paragraphOffset || c.globalStartIndex >= endLimit
+                });
+
+                return [...filtrado, ...fullTextsErrors]
+            });
             setIsProcessing(false);
         };
 
